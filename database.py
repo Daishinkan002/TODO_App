@@ -54,6 +54,15 @@ def init_db():
         cursor.execute("ALTER TABLE TaskInstances ADD COLUMN priority TEXT DEFAULT 'Normal'")
     except sqlite3.OperationalError:
         pass
+    # V3 Migrations
+    try:
+        cursor.execute("ALTER TABLE TaskTemplates ADD COLUMN color TEXT DEFAULT 'Default'")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE TaskInstances ADD COLUMN color TEXT DEFAULT 'Default'")
+    except sqlite3.OperationalError:
+        pass
         
     cursor.execute('''
         CREATE TRIGGER IF NOT EXISTS update_templates_trigger
@@ -73,7 +82,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_task(title, category='Personal', due_date=None, recurrence_type='None', priority='Normal'):
+def add_task(title, category='Personal', due_date=None, recurrence_type='None', priority='Normal', color='Default'):
     """Add a new task, supporting recurrences."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -83,15 +92,15 @@ def add_task(title, category='Personal', due_date=None, recurrence_type='None', 
     template_id = None
     if recurrence_type and recurrence_type.lower() != 'none':
         cursor.execute('''
-            INSERT INTO TaskTemplates (title, category, priority, recurrence_type)
-            VALUES (?, ?, ?, ?)
-        ''', (title, category, priority, recurrence_type))
+            INSERT INTO TaskTemplates (title, category, priority, color, recurrence_type)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (title, category, priority, color, recurrence_type))
         template_id = cursor.lastrowid
     
     cursor.execute('''
-        INSERT INTO TaskInstances (title, category, priority, template_id, due_date)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (title, category, priority, template_id, due_date))
+        INSERT INTO TaskInstances (title, category, priority, color, template_id, due_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (title, category, priority, color, template_id, due_date))
     
     conn.commit()
     conn.close()
@@ -101,7 +110,7 @@ def get_tasks_for_date(target_date):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, title, category, priority, template_id, due_date, status,
+        SELECT id, title, category, priority, color, template_id, due_date, status,
                datetime(created_at, 'localtime') as created_at,
                datetime(updated_at, 'localtime') as updated_at
         FROM TaskInstances 
@@ -119,7 +128,7 @@ def get_missed_tasks(today_date):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, title, category, priority, template_id, due_date, status,
+        SELECT id, title, category, priority, color, template_id, due_date, status,
                datetime(created_at, 'localtime') as created_at,
                datetime(updated_at, 'localtime') as updated_at
         FROM TaskInstances 
@@ -137,7 +146,7 @@ def get_history_tasks():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, title, category, priority, template_id, due_date, status,
+        SELECT id, title, category, priority, color, template_id, due_date, status,
                datetime(created_at, 'localtime') as created_at,
                datetime(updated_at, 'localtime') as updated_at
         FROM TaskInstances 
@@ -154,7 +163,7 @@ def get_templates():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT id, title, category, priority, recurrence_type,
+        SELECT id, title, category, priority, color, recurrence_type,
                datetime(created_at, 'localtime') as created_at
         FROM TaskTemplates
         ORDER BY category ASC, title ASC
@@ -169,7 +178,7 @@ def search_tasks(query):
     cursor = conn.cursor()
     like_query = f"%{query}%"
     cursor.execute('''
-        SELECT id, title, category, priority, template_id, due_date, status,
+        SELECT id, title, category, priority, color, template_id, due_date, status,
                datetime(created_at, 'localtime') as created_at,
                datetime(updated_at, 'localtime') as updated_at
         FROM TaskInstances 
@@ -229,7 +238,7 @@ def update_task_status(task_id, status):
         row = cursor.fetchone()
         if row and row['template_id']:
             template_id = row['template_id']
-            cursor.execute('SELECT title, category, priority, recurrence_type FROM TaskTemplates WHERE id = ?', (template_id,))
+            cursor.execute('SELECT title, category, priority, color, recurrence_type FROM TaskTemplates WHERE id = ?', (template_id,))
             template = cursor.fetchone()
             if template:
                 old_date = datetime.date.fromisoformat(row['due_date'])
@@ -251,9 +260,9 @@ def update_task_status(task_id, status):
                     cursor.execute("SELECT id FROM TaskInstances WHERE template_id = ? AND status = 'pending'", (template_id,))
                     if not cursor.fetchone():
                         cursor.execute('''
-                            INSERT INTO TaskInstances (title, category, priority, template_id, due_date)
-                            VALUES (?, ?, ?, ?, ?)
-                        ''', (template['title'], template['category'], template['priority'], template_id, next_date.isoformat()))
+                            INSERT INTO TaskInstances (title, category, priority, color, template_id, due_date)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ''', (template['title'], template['category'], template['priority'], template['color'], template_id, next_date.isoformat()))
                         conn.commit()
 
     conn.close()

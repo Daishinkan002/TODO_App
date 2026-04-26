@@ -12,6 +12,14 @@
 
 <br>
 
+<div align="center">
+  <img src="images/demo.png" alt="App Screenshot" width="750" style="border-radius: 12px;" />
+  <br/>
+  <sub><i>Elite To-Do — your tasks, beautifully managed.</i></sub>
+</div>
+
+<br>
+
 ## ✨ The Vision
 This application breaks away from Electron-heavy web wrappers by offering a lightning-fast, beautifully designed, and highly functional native desktop client integrated perfectly into the GNOME/Linux ecosystem.
 
