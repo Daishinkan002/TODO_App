@@ -148,7 +148,7 @@ class TaskRow(Adw.ActionRow):
         btn_yes.connect("clicked", self.on_action, "completed")
         button_box.append(btn_yes)
         
-        btn_no = Gtk.Button(icon_name="edit-delete-symbolic")
+        btn_no = Gtk.Button(icon_name="action-unavailable-symbolic")
         btn_no.add_css_class("circular")
         btn_no.set_tooltip_text("Mark as Missed")
         btn_no.connect("clicked", self.on_action, "missed")
